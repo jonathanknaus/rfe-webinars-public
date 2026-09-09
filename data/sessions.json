@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T14:30:46.358812+00:00",
+  "generated_at": "2026-09-09T08:09:06.784195+00:00",
   "timezone": "Europe/Paris",
   "webinars": [
     {
@@ -21,7 +21,7 @@
       "estimated_started_at": "2026-10-29T13:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 3,
+      "registrants": 5,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -38,7 +38,7 @@
       "estimated_started_at": "2026-10-28T14:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 2,
+      "registrants": 3,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -106,7 +106,7 @@
       "estimated_started_at": "2026-10-19T12:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 7,
+      "registrants": 8,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -123,7 +123,7 @@
       "estimated_started_at": "2026-10-15T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 2,
+      "registrants": 3,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -140,7 +140,7 @@
       "estimated_started_at": "2026-10-14T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 2,
+      "registrants": 3,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -174,7 +174,7 @@
       "estimated_started_at": "2026-10-08T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 7,
+      "registrants": 8,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -191,7 +191,7 @@
       "estimated_started_at": "2026-10-07T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 8,
+      "registrants": 10,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -259,7 +259,7 @@
       "estimated_started_at": "2026-09-30T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 38,
+      "registrants": 39,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -276,7 +276,7 @@
       "estimated_started_at": "2026-09-29T12:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 9,
+      "registrants": 11,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -293,7 +293,7 @@
       "estimated_started_at": "2026-09-28T12:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 55,
+      "registrants": 58,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -310,7 +310,7 @@
       "estimated_started_at": "2026-09-25T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 11,
+      "registrants": 14,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -344,7 +344,7 @@
       "estimated_started_at": "2026-09-23T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 58,
+      "registrants": 60,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -361,7 +361,7 @@
       "estimated_started_at": "2026-09-22T12:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 21,
+      "registrants": 27,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -378,7 +378,7 @@
       "estimated_started_at": "2026-09-21T12:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 125,
+      "registrants": 128,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -395,7 +395,7 @@
       "estimated_started_at": "2026-09-18T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 33,
+      "registrants": 37,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -412,7 +412,7 @@
       "estimated_started_at": "2026-09-17T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 94,
+      "registrants": 103,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -429,7 +429,7 @@
       "estimated_started_at": "2026-09-16T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 194,
+      "registrants": 211,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -446,7 +446,7 @@
       "estimated_started_at": "2026-09-15T12:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 78,
+      "registrants": 89,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -463,7 +463,7 @@
       "estimated_started_at": "2026-09-14T12:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 519,
+      "registrants": 549,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -480,7 +480,7 @@
       "estimated_started_at": "2026-09-11T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 222,
+      "registrants": 272,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -497,7 +497,7 @@
       "estimated_started_at": "2026-09-10T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 710,
+      "registrants": 818,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -555,9 +555,9 @@
       "duration_anomaly": false,
       "questions": 154,
       "csat": {
-        "score": 4.51,
+        "score": 4.6,
         "scale": 5,
-        "responses": 63
+        "responses": 60
       }
     },
     {
@@ -618,9 +618,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.27,
+        "score": 4.5,
         "scale": 5,
-        "responses": 15
+        "responses": 14
       }
     },
     {
@@ -639,9 +639,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.41,
+        "score": 4.52,
         "scale": 5,
-        "responses": 22
+        "responses": 21
       }
     },
     {
@@ -660,9 +660,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.19,
+        "score": 4.48,
         "scale": 5,
-        "responses": 37
+        "responses": 31
       }
     },
     {
@@ -681,9 +681,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.39,
+        "score": 4.53,
         "scale": 5,
-        "responses": 18
+        "responses": 17
       }
     },
     {
@@ -702,9 +702,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.51,
+        "score": 4.58,
         "scale": 5,
-        "responses": 39
+        "responses": 38
       }
     },
     {
@@ -744,9 +744,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.36,
+        "score": 4.44,
         "scale": 5,
-        "responses": 28
+        "responses": 27
       }
     },
     {
@@ -807,9 +807,9 @@
       "duration_anomaly": false,
       "questions": 0,
       "csat": {
-        "score": 4.57,
+        "score": 4.58,
         "scale": 5,
-        "responses": 201
+        "responses": 199
       }
     },
     {

@@ -129,6 +129,13 @@ h3 { font-size: 15px; font-weight: 700; margin: 30px 0 12px; color: var(--teal-d
 .ax { fill: var(--muted); font-size: 10px; text-anchor: start; }
 .bv { fill: var(--teal-dark); font-size: 10px; font-weight: 700; text-anchor: middle; }
 
+/* Courbe CSAT (évolution) */
+.spark-area { fill: url(#csatGrad); }
+.spark-line { fill: none; stroke: var(--green-dark); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.spark-dot { fill: var(--teal-dark); stroke: #fff; stroke-width: 2; cursor: pointer; transition: fill .12s; }
+.spark-dot:hover { fill: var(--green-dark); }
+.sv { fill: var(--teal-dark); font-size: 10px; font-weight: 700; text-anchor: middle; }
+
 /* ── Liste à venir ───────────────────────────────────────────────────── */
 .upcoming { list-style: none; margin: 0; padding: 0; }
 .upcoming li {

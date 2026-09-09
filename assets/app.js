@@ -191,6 +191,7 @@ function renderWebinar(w, sessions) {
     </div>
     <h3>Taux de présence par session</h3>
     ${barChart(past)}
+    ${csat ? `<h3>Évolution de la satisfaction (CSAT)</h3>${csatChart(past)}` : ""}
     ${upcoming.length ? `<h3>Sessions à venir</h3>${upcomingList(upcoming)}` : ""}
     <h3>Détail des sessions passées</h3>
     ${table(past.slice().reverse())}
@@ -237,6 +238,65 @@ function barChart(past) {
 
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" ` +
     `aria-label="Taux de présence par session">${defs}${grid}${bars}</svg></div>`;
+}
+
+// Courbe d'évolution du CSAT par session (mêmes conventions que barChart).
+// Seules les sessions notées sont tracées ; l'axe Y est borné [plancher, échelle]
+// — on part d'un plancher propre sous la note la plus basse pour rendre la
+// tendance lisible (les CSAT se tiennent en haut de l'échelle) sans jamais
+// dépasser le maximum réel. Les points sont cliquables (détail de la session).
+function csatChart(past) {
+  const pts = past.filter((s) => s.csat && typeof s.csat === "object" && s.csat.score != null);
+  if (!pts.length) return `<p class="muted">Pas encore de réponses de satisfaction.</p>`;
+  const scale = pts[0].csat.scale || 5;
+  const scores = pts.map((s) => s.csat.score);
+  const dataMin = Math.min.apply(null, scores);
+
+  const top = scale;
+  let bottom = Math.max(0, Math.floor(dataMin - 0.5));
+  if (top - bottom < 1) bottom = Math.max(0, top - 1);
+  const range = (top - bottom) || 1;
+  const tickStep = range <= 2 ? 0.5 : 1;
+  const decimals = tickStep < 1 ? 1 : 0;
+
+  const W = 820, H = 280, padL = 42, padR = 12, padT = 22, padB = 74;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const n = pts.length, step = iw / n;
+  const cx = (i) => padL + step * i + step / 2;
+  const cy = (v) => padT + ih - ih * ((v - bottom) / range);
+
+  let grid = "";
+  for (let t = bottom; t <= top + 1e-9; t += tickStep) {
+    const y = cy(t);
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" class="grid"/>`;
+    grid += `<text x="${padL - 8}" y="${(y + 4).toFixed(1)}" class="ay">${t.toFixed(decimals)}</text>`;
+  }
+
+  const linePath = pts.map((s, i) => `${i ? "L" : "M"}${cx(i).toFixed(1)},${cy(s.csat.score).toFixed(1)}`).join(" ");
+  const areaPath = `M${cx(0).toFixed(1)},${(padT + ih).toFixed(1)} `
+    + pts.map((s, i) => `L${cx(i).toFixed(1)},${cy(s.csat.score).toFixed(1)}`).join(" ")
+    + ` L${cx(n - 1).toFixed(1)},${(padT + ih).toFixed(1)} Z`;
+
+  let dots = "";
+  pts.forEach((s, i) => {
+    const x = cx(i), y = cy(s.csat.score);
+    const d = fmtDate(s.estimated_started_at);
+    const resp = s.csat.responses != null ? ` · ${intf(s.csat.responses)} rép.` : "";
+    dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="spark-dot" data-sid="${esc(s.session_id)}">` +
+      `<title>${esc(d)} — ${String(s.csat.score).replace(".", ",")}/${scale}${resp} · cliquer pour le détail</title></circle>`;
+    dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="sv">${String(s.csat.score).replace(".", ",")}</text>`;
+    const ly = padT + ih + 16;
+    dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
+  });
+
+  const defs = `<defs><linearGradient id="csatGrad" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0%" stop-color="#00BD57" stop-opacity=".25"/>` +
+    `<stop offset="100%" stop-color="#00BD57" stop-opacity="0"/></linearGradient></defs>`;
+  const areaEl = n > 1 ? `<path d="${areaPath}" class="spark-area"/>` : "";
+  const lineEl = n > 1 ? `<path d="${linePath}" class="spark-line"/>` : "";
+
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" ` +
+    `aria-label="Évolution de la satisfaction CSAT par session">${defs}${grid}${areaEl}${lineEl}${dots}</svg></div>`;
 }
 
 function upcomingList(up) {
