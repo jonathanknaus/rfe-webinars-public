@@ -124,6 +124,7 @@ h3 { font-size: 15px; font-weight: 700; margin: 30px 0 12px; color: var(--teal-d
 .chart svg { width: 100%; height: auto; display: block; }
 .bar { fill: url(#barGrad); transition: opacity .15s; cursor: pointer; }
 .bar:hover { opacity: .78; }
+.bar-att { fill: url(#attGrad); }   /* participants (présents en direct) — couleur distincte du taux */
 .grid { stroke: var(--line); stroke-width: 1; }
 .ay { fill: var(--muted); font-size: 10px; text-anchor: end; }
 .ax { fill: var(--muted); font-size: 10px; text-anchor: start; }
