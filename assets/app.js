@@ -424,6 +424,13 @@ function openDetail(s) {
     ? intf(s.duration_min) + " min" + (s.duration_anomaly ? " ⚠️" : "")
     : "—";
   const attLabel = s.status === "upcoming" ? "Inscrits à ce jour" : "Inscrits";
+  // Détail replay : uniquement si le comptage a eu lieu (replay non null, càd
+  // session terminée d'un webinar publié). Sinon on n'affiche que le direct.
+  const hasReplay = s.replay != null;
+  const replayTiles = hasReplay
+    ? stat(intf(s.replay), "Ont vu le replay") +
+      stat(intf(s.attendees_total), "Audience totale (direct + replay)")
+    : "";
 
   d.innerHTML = `
     <div class="dlg-head">
@@ -435,7 +442,8 @@ function openDetail(s) {
     <div class="dlg-body">
       <div class="stat-grid">
         ${stat(intf(s.registrants), attLabel)}
-        ${stat(intf(s.attendees), "Présents")}
+        ${stat(intf(s.attendees), hasReplay ? "Présents en direct" : "Présents")}
+        ${replayTiles}
         ${stat(pct(s.attendance_rate), "Taux de présence")}
         ${stat(dur, "Durée")}
         ${stat(intf(s.questions), "Questions posées")}
