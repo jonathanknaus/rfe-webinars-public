@@ -191,7 +191,7 @@ function renderWebinar(w, sessions) {
     </div>
     <h3>Taux de présence par session</h3>
     ${barChart(past)}
-    <h3>Participants par session (présents en direct)</h3>
+    <h3>Participants par session (direct + replay)</h3>
     ${attendeesChart(past)}
     ${csat ? `<h3>Évolution de la satisfaction (CSAT)</h3>${csatChart(past)}` : ""}
     ${upcoming.length ? `<h3>Sessions à venir</h3>${upcomingList(upcoming)}` : ""}
@@ -242,16 +242,21 @@ function barChart(past) {
     `aria-label="Taux de présence par session">${defs}${grid}${bars}</svg></div>`;
 }
 
-// Nombre de participants (présents EN DIRECT) par session, en valeurs absolues —
-// distinct du taux de présence (%). Barres proportionnelles au max de présents,
-// cliquables (détail de la session). Livestorm n'expose pas de compteur de vues
-// replay en agrégat sans PII → ce graphique compte les présents live uniquement.
+// Participants par session : audience TOTALE (présents en direct ∪ spectateurs
+// replay), en valeurs absolues, tracée en COURBE (mêmes conventions que csatChart).
+// On retombe sur les présents en direct quand le total n'a pas été calculé
+// (attendees_total absent, ex. webinar non publié). Le tooltip détaille les deux
+// chiffres + le total. Axe Y en entiers à partir de 0. Points cliquables.
 function attendeesChart(past) {
   if (!past.length) return `<p class="muted">Aucune session passée pour l'instant.</p>`;
-  const maxV = Math.max(1, ...past.map((s) => Math.max(0, s.attendees || 0)));
-  const W = 820, H = 280, padL = 52, padR = 12, padT = 18, padB = 74;
+  const val = (s) => Math.max(0, s.attendees_total != null ? s.attendees_total : (s.attendees || 0));
+  const maxV = Math.max(1, ...past.map(val));
+
+  const W = 820, H = 280, padL = 52, padR = 12, padT = 22, padB = 74;
   const iw = W - padL - padR, ih = H - padT - padB;
-  const n = past.length, step = iw / n, bw = Math.max(6, Math.min(46, step - 10));
+  const n = past.length, step = iw / n;
+  const cx = (i) => padL + step * i + step / 2;
+  const cy = (v) => padT + ih - ih * (v / maxV);
 
   let grid = "";
   [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
@@ -260,27 +265,35 @@ function attendeesChart(past) {
     grid += `<text x="${padL - 8}" y="${(y + 4).toFixed(1)}" class="ay">${intf(Math.round(maxV * t))}</text>`;
   });
 
-  let bars = "";
+  const linePath = past.map((s, i) => `${i ? "L" : "M"}${cx(i).toFixed(1)},${cy(val(s)).toFixed(1)}`).join(" ");
+  const areaPath = `M${cx(0).toFixed(1)},${(padT + ih).toFixed(1)} `
+    + past.map((s, i) => `L${cx(i).toFixed(1)},${cy(val(s)).toFixed(1)}`).join(" ")
+    + ` L${cx(n - 1).toFixed(1)},${(padT + ih).toFixed(1)} Z`;
+
+  let dots = "";
   past.forEach((s, i) => {
-    const v = Math.max(0, s.attendees || 0);
-    const h = ih * (v / maxV);
-    const x = padL + i * step + (step - bw) / 2;
-    const y = padT + ih - h;
+    const v = val(s), x = cx(i), y = cy(v);
     const d = fmtDate(s.estimated_started_at);
-    const cx = (x + bw / 2).toFixed(1);
-    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" class="bar bar-att" data-sid="${esc(s.session_id)}">` +
-      `<title>${esc(d)} — ${intf(v)} présent(s) en direct · cliquer pour le détail</title></rect>`;
-    if (bw >= 22 && h > 16) bars += `<text x="${cx}" y="${(y - 5).toFixed(1)}" class="bv">${intf(v)}</text>`;
+    // Si le replay a été compté (replay non null) : les deux chiffres + le total ;
+    // sinon on n'a que le direct.
+    const tip = s.replay != null
+      ? `${esc(d)} — ${intf(v)} au total (audience unique) · ${intf(s.attendees)} en direct · ${intf(s.replay)} ont vu le replay`
+      : `${esc(d)} — ${intf(v)} présent(s) en direct`;
+    dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="att-dot" data-sid="${esc(s.session_id)}">` +
+      `<title>${tip} · cliquer pour le détail</title></circle>`;
+    dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="av">${intf(v)}</text>`;
     const ly = padT + ih + 16;
-    bars += `<text x="${cx}" y="${ly}" class="ax" transform="rotate(40 ${cx} ${ly})">${esc(d)}</text>`;
+    dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
   });
 
   const defs = `<defs><linearGradient id="attGrad" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0%" stop-color="#3E86FF"/><stop offset="100%" stop-color="#1B3A8F"/>` +
-    `</linearGradient></defs>`;
+    `<stop offset="0%" stop-color="#3E86FF" stop-opacity=".22"/>` +
+    `<stop offset="100%" stop-color="#3E86FF" stop-opacity="0"/></linearGradient></defs>`;
+  const areaEl = n > 1 ? `<path d="${areaPath}" class="att-area"/>` : "";
+  const lineEl = n > 1 ? `<path d="${linePath}" class="att-line"/>` : "";
 
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" ` +
-    `aria-label="Nombre de participants (présents en direct) par session">${defs}${grid}${bars}</svg></div>`;
+    `aria-label="Participants (direct + replay) par session">${defs}${grid}${areaEl}${lineEl}${dots}</svg></div>`;
 }
 
 // Courbe d'évolution du CSAT par session (mêmes conventions que barChart).
