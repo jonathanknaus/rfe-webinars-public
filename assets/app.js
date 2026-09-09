@@ -6,6 +6,9 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
 ));
 const pct = (v) => (v == null ? "—" : (v * 100).toFixed(1) + " %");
 const intf = (v) => (v == null ? "—" : Number(v).toLocaleString("fr-FR"));
+// Audience totale d'une session : audience unique direct ∪ replay quand elle a été
+// comptée (attendees_total), sinon le direct seul (repli). Base du taux de présence.
+const attTotal = (s) => (s.attendees_total != null ? s.attendees_total : (s.attendees || 0));
 
 function parseDate(s) {
   if (!s) return null;
@@ -169,8 +172,9 @@ function renderWebinar(w, sessions) {
 
   const totReg = past.reduce((n, s) => n + (s.registrants || 0), 0);
   const totAtt = past.reduce((n, s) => n + (s.attendees || 0), 0);
+  const totTotal = past.reduce((n, s) => n + attTotal(s), 0);   // direct + replay (unique)
   const totQ = past.reduce((n, s) => n + (s.questions || 0), 0);
-  const avg = totReg ? totAtt / totReg : null;
+  const avg = totReg ? totTotal / totReg : null;   // taux = (direct + replay) / inscrits
   const csat = csatAvg(past);
 
   const sec = document.createElement("section");
@@ -228,7 +232,7 @@ function barChart(past) {
     const d = fmtDate(s.estimated_started_at);
     const cx = (x + bw / 2).toFixed(1);
     bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" class="bar" data-sid="${esc(s.session_id)}">` +
-      `<title>${esc(d)} — ${pct(s.attendance_rate)} (${intf(s.attendees)}/${intf(s.registrants)}) · cliquer pour le détail</title></rect>`;
+      `<title>${esc(d)} — ${pct(s.attendance_rate)} (${intf(attTotal(s))}/${intf(s.registrants)}) · cliquer pour le détail</title></rect>`;
     if (bw >= 22 && h > 16) bars += `<text x="${cx}" y="${(y - 5).toFixed(1)}" class="bv">${Math.round(r * 100)}</text>`;
     const ly = padT + ih + 16;
     bars += `<text x="${cx}" y="${ly}" class="ax" transform="rotate(40 ${cx} ${ly})">${esc(d)}</text>`;
@@ -249,7 +253,7 @@ function barChart(past) {
 // chiffres + le total. Axe Y en entiers à partir de 0. Points cliquables.
 function attendeesChart(past) {
   if (!past.length) return `<p class="muted">Aucune session passée pour l'instant.</p>`;
-  const val = (s) => Math.max(0, s.attendees_total != null ? s.attendees_total : (s.attendees || 0));
+  const val = (s) => Math.max(0, attTotal(s));
   const maxV = Math.max(1, ...past.map(val));
 
   const W = 820, H = 280, padL = 52, padR = 12, padT = 22, padB = 74;
