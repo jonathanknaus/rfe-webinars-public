@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-09T14:48:27.415140+00:00",
+  "generated_at": "2026-09-09T15:48:32.714381+00:00",
   "timezone": "Europe/Paris",
   "webinars": [
     {
@@ -412,7 +412,7 @@
       "estimated_started_at": "2026-09-17T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 109,
+      "registrants": 111,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -429,7 +429,7 @@
       "estimated_started_at": "2026-09-16T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 231,
+      "registrants": 234,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -446,7 +446,7 @@
       "estimated_started_at": "2026-09-15T12:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 110,
+      "registrants": 114,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -463,7 +463,7 @@
       "estimated_started_at": "2026-09-14T12:30:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 580,
+      "registrants": 582,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -480,7 +480,7 @@
       "estimated_started_at": "2026-09-11T13:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 313,
+      "registrants": 320,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -497,7 +497,7 @@
       "estimated_started_at": "2026-09-10T08:00:00+00:00",
       "started_at": "",
       "ended_at": "",
-      "registrants": 934,
+      "registrants": 949,
       "attendees": 0,
       "attendance_rate": 0.0,
       "duration_min": null,
@@ -520,7 +520,11 @@
       "duration_min": 41.4,
       "duration_anomaly": false,
       "questions": 190,
-      "csat": null
+      "csat": {
+        "score": 4.59,
+        "scale": 5,
+        "responses": 17
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -554,7 +558,11 @@
       "duration_min": 51.0,
       "duration_anomaly": false,
       "questions": 154,
-      "csat": null
+      "csat": {
+        "score": 4.64,
+        "scale": 5,
+        "responses": 58
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -571,7 +579,11 @@
       "duration_min": 48.0,
       "duration_anomaly": false,
       "questions": 200,
-      "csat": null
+      "csat": {
+        "score": 4.86,
+        "scale": 5,
+        "responses": 7
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -588,7 +600,11 @@
       "duration_min": 720.0,
       "duration_anomaly": true,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.33,
+        "scale": 5,
+        "responses": 3
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -605,7 +621,11 @@
       "duration_min": 29.4,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.5,
+        "scale": 5,
+        "responses": 14
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -622,7 +642,11 @@
       "duration_min": 29.4,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.52,
+        "scale": 5,
+        "responses": 21
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -639,7 +663,11 @@
       "duration_min": 29.4,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.48,
+        "scale": 5,
+        "responses": 31
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -656,7 +684,11 @@
       "duration_min": 29.5,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.53,
+        "scale": 5,
+        "responses": 17
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -673,7 +705,11 @@
       "duration_min": 37.5,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.58,
+        "scale": 5,
+        "responses": 38
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -690,7 +726,11 @@
       "duration_min": 34.5,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.41,
+        "scale": 5,
+        "responses": 58
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -707,7 +747,11 @@
       "duration_min": 39.1,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.44,
+        "scale": 5,
+        "responses": 27
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -724,7 +768,11 @@
       "duration_min": 42.5,
       "duration_anomaly": false,
       "questions": 1,
-      "csat": null
+      "csat": {
+        "score": 4.5,
+        "scale": 5,
+        "responses": 62
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -741,7 +789,11 @@
       "duration_min": 34.7,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.7,
+        "scale": 5,
+        "responses": 74
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
@@ -758,7 +810,11 @@
       "duration_min": 35.8,
       "duration_anomaly": false,
       "questions": 0,
-      "csat": null
+      "csat": {
+        "score": 4.58,
+        "scale": 5,
+        "responses": 199
+      }
     },
     {
       "event_id": "de2c1ed7-2d58-413e-a0e9-2974ea85ef9c",
