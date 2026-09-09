@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Hors moteurs de recherche : site interne (agrégats sans PII) accessible
+       par lien seulement. Le crawl reste autorisé pour que les robots LISENT ce
+       noindex et retirent la page (un robots.txt bloquant les en empêcherait). -->
+  <meta name="robots" content="noindex, nofollow">
   <title>Présence aux webinars — Pennylane</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
