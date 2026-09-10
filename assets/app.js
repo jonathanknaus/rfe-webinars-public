@@ -171,6 +171,8 @@ function renderWebinar(w, sessions) {
     .sort((a, b) => ts(a.estimated_started_at) - ts(b.estimated_started_at));
 
   const totReg = past.reduce((n, s) => n + (s.registrants || 0), 0);
+  const totRegUp = upcoming.reduce((n, s) => n + (s.registrants || 0), 0);   // inscrits sessions à venir
+  const totRegAll = sessions.reduce((n, s) => n + (s.registrants || 0), 0);  // inscrits toutes sessions
   const totAtt = past.reduce((n, s) => n + (s.attendees || 0), 0);
   const totTotal = past.reduce((n, s) => n + attTotal(s), 0);   // direct + replay (unique)
   const totQ = past.reduce((n, s) => n + (s.questions || 0), 0);
@@ -187,6 +189,8 @@ function renderWebinar(w, sessions) {
     <div class="kpis">
       ${kpi("Taux de présence moyen", pct(avg), "passé")}
       ${kpi("Inscrits (cumul passé)", intf(totReg))}
+      ${kpi("Inscrits (sessions à venir)", intf(totRegUp))}
+      ${kpi("Inscrits (toutes sessions)", intf(totRegAll))}
       ${kpi("Présents (cumul passé)", intf(totAtt))}
       ${kpi("Questions posées (cumul)", intf(totQ))}
       ${csat ? kpi("Satisfaction (CSAT)", `${csat.score}/${csat.scale}`, `${intf(csat.responses)} rép.`) : ""}
