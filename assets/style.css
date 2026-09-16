@@ -86,6 +86,50 @@ body {
 .fb-reset:hover { border-color: var(--green-light); }
 .fb-count { color: var(--muted); font-size: 13px; margin-left: auto; font-variant-numeric: tabular-nums; }
 
+/* ── Onglets par webinar ─────────────────────────────────────────────────
+   Partagés par la vue lecture (index.html + page publiée, pilotés par app.js)
+   ET la console admin (admin.js, qui ajoute l'onglet « Catalogue » via
+   .wtab-cat dans admin.css). */
+.wtabs {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px;
+  padding-top: 22px; padding-bottom: 0;
+  border-bottom: 2px solid var(--line);
+}
+.wtab {
+  font: inherit; font-weight: 700; font-size: 13.5px; cursor: pointer;
+  background: var(--bg-light); color: var(--teal-dark);
+  border: 1px solid var(--line); border-bottom: none;
+  border-radius: 10px 10px 0 0; padding: 9px 16px; margin-bottom: -2px;
+  max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.wtab:hover { background: var(--card); }
+.wtab.active {
+  background: var(--teal-dark); color: #fff; border-color: var(--teal-dark);
+}
+
+/* Variant « grille de 3 » (vue lecture, classe .wtabs-grid sur la barre) :
+   3 onglets par ligne, titre COMPLET (retour à la ligne au lieu de la troncature
+   « … »). Onglets en pastilles arrondies — la métaphore « onglet collé au trait »
+   ne tient plus sur plusieurs lignes. Réservé à la vue lecture : la console admin
+   garde ses onglets flex (.wtabs sans ce variant). */
+.wtabs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border-bottom: none;
+}
+.wtabs-grid .wtab {
+  max-width: none; white-space: normal; overflow: visible; text-overflow: clip;
+  margin-bottom: 0; border: 1px solid var(--line); border-radius: 10px;
+  line-height: 1.3; text-align: center;
+  display: flex; align-items: center; justify-content: center;
+}
+.wtabs-grid .wtab.active { border-color: var(--teal-dark); }
+@media (max-width: 640px) {
+  .wtabs-grid { grid-template-columns: 1fr; }   /* mobile : onglets empilés */
+}
+
 .webinar { margin-bottom: 52px; }
 .wh { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .wh h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.4px; color: var(--teal-dark); }

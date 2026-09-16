@@ -68,6 +68,14 @@ const byId = new Map();
 // État global : données chargées + bornes du filtre par date (null = illimité).
 const state = { data: null, from: null, to: null };
 
+// ---- onglets par webinar (vue lecture seule) -----------------------------
+// La console admin (admin.js) gère ses PROPRES onglets sur #wtabs (couplés au
+// catalogue + aux cases « publier »). Ici on ne construit d'onglets QUE pour la
+// vue lecture (index.html + page publiée). On se DÉSACTIVE dès qu'on détecte la
+// page admin (présence de #catalog, absent de la vue lecture) → aucun conflit.
+const isAdminPage = () => !!document.getElementById("catalog");
+let roTab = 0;                 // index du webinar affiché (vue lecture)
+
 // ---- filtre par date -----------------------------------------------------
 const sessionDate = (s) => s.started_at || s.estimated_started_at || "";
 
@@ -125,12 +133,50 @@ function render() {
 
   if (!webinars.length) {
     app.innerHTML = `<div class="card">Aucun webinar suivi pour le moment.</div>`;
+    syncReadonlyTabs();
     return;
   }
   app.innerHTML = "";
   for (const w of webinars) {
     app.appendChild(renderWebinar(w, sessions.filter((s) => s.event_id === w.id)));
   }
+  syncReadonlyTabs();
+}
+
+// (Re)construit la barre d'onglets de la vue lecture à partir des sections
+// rendues ci-dessus (une <section.webinar> par webinar, dans l'ordre de
+// state.data.webinars). Rejouée à chaque render() (ex. filtre par date) → doit
+// rester idempotente. No-op sur la page admin : admin.js pilote #wtabs là-bas.
+function syncReadonlyTabs() {
+  if (isAdminPage()) return;
+  const nav = document.getElementById("wtabs");
+  if (!nav) return;                        // page sans barre d'onglets
+  const secs = Array.from(document.querySelectorAll("#app .webinar"));
+  if (secs.length <= 1) {                  // 0 ou 1 webinar → onglets inutiles
+    nav.hidden = true;
+    secs.forEach((sec) => { sec.hidden = false; });
+    return;
+  }
+  if (roTab >= secs.length) roTab = secs.length - 1;
+  const ws = (state.data && state.data.webinars) || [];
+  nav.hidden = false;
+  nav.innerHTML = secs.map((sec, i) => {
+    const label = (ws[i] && (ws[i].title || ws[i].id)) || `Webinar ${i + 1}`;
+    return `<button type="button" class="wtab${i === roTab ? " active" : ""}" ` +
+      `data-rotab="${i}" title="${esc(label)}">${esc(label)}</button>`;
+  }).join("");
+  secs.forEach((sec, i) => { sec.hidden = (i !== roTab); });
+}
+
+// Bascule d'onglet (vue lecture) : masque/affiche sans re-rendre tout #app.
+function onReadonlyTabClick(e) {
+  const t = e.target.closest(".wtab");
+  if (!t || t.dataset.rotab == null) return;
+  roTab = Number(t.dataset.rotab);
+  document.querySelectorAll("#app .webinar").forEach((sec, i) => { sec.hidden = (i !== roTab); });
+  document.querySelectorAll("#wtabs .wtab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.rotab === String(roTab));
+  });
 }
 
 // ---- load ----------------------------------------------------------------
@@ -158,6 +204,10 @@ async function main() {
     const s = byId.get(el.getAttribute("data-sid"));
     if (s) openDetail(s);
   });
+
+  // Onglets de la vue lecture (jamais sur la page admin : admin.js s'en charge).
+  const wtabs = document.getElementById("wtabs");
+  if (wtabs && !isAdminPage()) wtabs.addEventListener("click", onReadonlyTabClick);
 }
 
 // Recharge sessions.json puis re-rend (appelé par la page admin après une
