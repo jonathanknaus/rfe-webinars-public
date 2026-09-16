@@ -9,6 +9,19 @@ const intf = (v) => (v == null ? "—" : Number(v).toLocaleString("fr-FR"));
 // Audience totale d'une session : audience unique direct ∪ replay quand elle a été
 // comptée (attendees_total), sinon le direct seul (repli). Base du taux de présence.
 const attTotal = (s) => (s.attendees_total != null ? s.attendees_total : (s.attendees || 0));
+// id de dégradé SVG unique par webinar. Sans cela, tous les graphes de la page
+// définissent le même id (barGrad/attGrad/csatGrad) : url(#id) pointe vers le
+// PREMIER du document, et dès que cet onglet passe en display:none (console
+// admin) WebKit/Chrome cessent de peindre le remplissage → barres/aires vides.
+const gradId = (base, uid) => `${base}-${String(uid).replace(/[^a-zA-Z0-9_-]/g, "")}`;
+// Axe temporel dense : renvoie un prédicat (i) → afficher ou non le repère i.
+// On ne garde qu'environ `maxLabels` repères (premier et dernier toujours
+// inclus) ; au-delà, les dates pivotées se chevauchent en un amas illisible.
+// Les barres/points restent TOUS tracés — seuls les libellés sont espacés.
+const tickVisible = (n, maxLabels = 12) => {
+  const stride = Math.max(1, Math.ceil(n / maxLabels));
+  return (i) => i % stride === 0 || i === n - 1;
+};
 
 function parseDate(s) {
   if (!s) return null;
@@ -198,10 +211,10 @@ function renderWebinar(w, sessions) {
       ${kpi("Sessions à venir", intf(upcoming.length))}
     </div>
     <h3>Taux de présence par session</h3>
-    ${barChart(past)}
+    ${barChart(past, w.id)}
     <h3>Participants par session (direct + replay)</h3>
-    ${attendeesChart(past)}
-    ${csat ? `<h3>Évolution de la satisfaction (CSAT)</h3>${csatChart(past)}` : ""}
+    ${attendeesChart(past, w.id)}
+    ${csat ? `<h3>Évolution de la satisfaction (CSAT)</h3>${csatChart(past, w.id)}` : ""}
     ${upcoming.length ? `<h3>Sessions à venir</h3>${upcomingList(upcoming)}` : ""}
     <h3>Détail des sessions passées</h3>
     ${table(past.slice().reverse())}
@@ -214,11 +227,13 @@ function kpi(label, value, note) {
     `<div class="kpi-l">${esc(label)}${note ? ` <em>(${esc(note)})</em>` : ""}</div></div>`;
 }
 
-function barChart(past) {
+function barChart(past, uid) {
   if (!past.length) return `<p class="muted">Aucune session passée pour l'instant.</p>`;
+  const bg = gradId("barGrad", uid);
   const W = 820, H = 280, padL = 42, padR = 12, padT = 18, padB = 74;
   const iw = W - padL - padR, ih = H - padT - padB;
   const n = past.length, step = iw / n, bw = Math.max(6, Math.min(46, step - 10));
+  const showTick = tickVisible(n);
 
   let grid = "";
   [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
@@ -235,14 +250,16 @@ function barChart(past) {
     const y = padT + ih - h;
     const d = fmtDate(s.estimated_started_at);
     const cx = (x + bw / 2).toFixed(1);
-    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" class="bar" data-sid="${esc(s.session_id)}">` +
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="url(#${bg})" class="bar" data-sid="${esc(s.session_id)}">` +
       `<title>${esc(d)} — ${pct(s.attendance_rate)} (${intf(attTotal(s))}/${intf(s.registrants)}) · cliquer pour le détail</title></rect>`;
     if (bw >= 22 && h > 16) bars += `<text x="${cx}" y="${(y - 5).toFixed(1)}" class="bv">${Math.round(r * 100)}</text>`;
-    const ly = padT + ih + 16;
-    bars += `<text x="${cx}" y="${ly}" class="ax" transform="rotate(40 ${cx} ${ly})">${esc(d)}</text>`;
+    if (showTick(i)) {
+      const ly = padT + ih + 16;
+      bars += `<text x="${cx}" y="${ly}" class="ax" transform="rotate(40 ${cx} ${ly})">${esc(d)}</text>`;
+    }
   });
 
-  const defs = `<defs><linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">` +
+  const defs = `<defs><linearGradient id="${bg}" x1="0" y1="0" x2="0" y2="1">` +
     `<stop offset="0%" stop-color="#00BD57"/><stop offset="100%" stop-color="#006666"/>` +
     `</linearGradient></defs>`;
 
@@ -255,14 +272,16 @@ function barChart(past) {
 // On retombe sur les présents en direct quand le total n'a pas été calculé
 // (attendees_total absent, ex. webinar non publié). Le tooltip détaille les deux
 // chiffres + le total. Axe Y en entiers à partir de 0. Points cliquables.
-function attendeesChart(past) {
+function attendeesChart(past, uid) {
   if (!past.length) return `<p class="muted">Aucune session passée pour l'instant.</p>`;
+  const ag = gradId("attGrad", uid);
   const val = (s) => Math.max(0, attTotal(s));
   const maxV = Math.max(1, ...past.map(val));
 
   const W = 820, H = 280, padL = 52, padR = 12, padT = 22, padB = 74;
   const iw = W - padL - padR, ih = H - padT - padB;
   const n = past.length, step = iw / n;
+  const showTick = tickVisible(n);
   const cx = (i) => padL + step * i + step / 2;
   const cy = (v) => padT + ih - ih * (v / maxV);
 
@@ -289,15 +308,17 @@ function attendeesChart(past) {
       : `${esc(d)} — ${intf(v)} présent(s) en direct`;
     dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="att-dot" data-sid="${esc(s.session_id)}">` +
       `<title>${tip} · cliquer pour le détail</title></circle>`;
-    dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="av">${intf(v)}</text>`;
-    const ly = padT + ih + 16;
-    dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
+    if (showTick(i)) {
+      dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="av">${intf(v)}</text>`;
+      const ly = padT + ih + 16;
+      dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
+    }
   });
 
-  const defs = `<defs><linearGradient id="attGrad" x1="0" y1="0" x2="0" y2="1">` +
+  const defs = `<defs><linearGradient id="${ag}" x1="0" y1="0" x2="0" y2="1">` +
     `<stop offset="0%" stop-color="#3E86FF" stop-opacity=".22"/>` +
     `<stop offset="100%" stop-color="#3E86FF" stop-opacity="0"/></linearGradient></defs>`;
-  const areaEl = n > 1 ? `<path d="${areaPath}" class="att-area"/>` : "";
+  const areaEl = n > 1 ? `<path d="${areaPath}" fill="url(#${ag})" class="att-area"/>` : "";
   const lineEl = n > 1 ? `<path d="${linePath}" class="att-line"/>` : "";
 
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" ` +
@@ -309,9 +330,10 @@ function attendeesChart(past) {
 // — on part d'un plancher propre sous la note la plus basse pour rendre la
 // tendance lisible (les CSAT se tiennent en haut de l'échelle) sans jamais
 // dépasser le maximum réel. Les points sont cliquables (détail de la session).
-function csatChart(past) {
+function csatChart(past, uid) {
   const pts = past.filter((s) => s.csat && typeof s.csat === "object" && s.csat.score != null);
   if (!pts.length) return `<p class="muted">Pas encore de réponses de satisfaction.</p>`;
+  const cg = gradId("csatGrad", uid);
   const scale = pts[0].csat.scale || 5;
   const scores = pts.map((s) => s.csat.score);
   const dataMin = Math.min.apply(null, scores);
@@ -326,6 +348,7 @@ function csatChart(past) {
   const W = 820, H = 280, padL = 42, padR = 12, padT = 22, padB = 74;
   const iw = W - padL - padR, ih = H - padT - padB;
   const n = pts.length, step = iw / n;
+  const showTick = tickVisible(n);
   const cx = (i) => padL + step * i + step / 2;
   const cy = (v) => padT + ih - ih * ((v - bottom) / range);
 
@@ -348,15 +371,17 @@ function csatChart(past) {
     const resp = s.csat.responses != null ? ` · ${intf(s.csat.responses)} rép.` : "";
     dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="spark-dot" data-sid="${esc(s.session_id)}">` +
       `<title>${esc(d)} — ${String(s.csat.score).replace(".", ",")}/${scale}${resp} · cliquer pour le détail</title></circle>`;
-    dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="sv">${String(s.csat.score).replace(".", ",")}</text>`;
-    const ly = padT + ih + 16;
-    dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
+    if (showTick(i)) {
+      dots += `<text x="${x.toFixed(1)}" y="${(y - 10).toFixed(1)}" class="sv">${String(s.csat.score).replace(".", ",")}</text>`;
+      const ly = padT + ih + 16;
+      dots += `<text x="${x.toFixed(1)}" y="${ly}" class="ax" transform="rotate(40 ${x.toFixed(1)} ${ly})">${esc(d)}</text>`;
+    }
   });
 
-  const defs = `<defs><linearGradient id="csatGrad" x1="0" y1="0" x2="0" y2="1">` +
+  const defs = `<defs><linearGradient id="${cg}" x1="0" y1="0" x2="0" y2="1">` +
     `<stop offset="0%" stop-color="#00BD57" stop-opacity=".25"/>` +
     `<stop offset="100%" stop-color="#00BD57" stop-opacity="0"/></linearGradient></defs>`;
-  const areaEl = n > 1 ? `<path d="${areaPath}" class="spark-area"/>` : "";
+  const areaEl = n > 1 ? `<path d="${areaPath}" fill="url(#${cg})" class="spark-area"/>` : "";
   const lineEl = n > 1 ? `<path d="${linePath}" class="spark-line"/>` : "";
 
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" ` +

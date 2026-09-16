@@ -122,22 +122,24 @@ h3 { font-size: 15px; font-weight: 700; margin: 30px 0 12px; color: var(--teal-d
   padding: 16px; box-shadow: var(--shadow);
 }
 .chart svg { width: 100%; height: auto; display: block; }
-.bar { fill: url(#barGrad); transition: opacity .15s; cursor: pointer; }
+/* Remplissage (fill) posé sur chaque élément avec un id de dégradé UNIQUE par
+   webinar (cf. gradId dans app.js) — ne pas le figer ici, un id partagé casse le
+   rendu quand l'onglet source passe en display:none dans la console admin. */
+.bar { transition: opacity .15s; cursor: pointer; }
 .bar:hover { opacity: .78; }
 .grid { stroke: var(--line); stroke-width: 1; }
 .ay { fill: var(--muted); font-size: 10px; text-anchor: end; }
 .ax { fill: var(--muted); font-size: 10px; text-anchor: start; }
 .bv { fill: var(--teal-dark); font-size: 10px; font-weight: 700; text-anchor: middle; }
 
-/* Courbe CSAT (évolution) */
-.spark-area { fill: url(#csatGrad); }
+/* Courbe CSAT (évolution) — fill posé sur l'élément (id de dégradé unique). */
 .spark-line { fill: none; stroke: var(--green-dark); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .spark-dot { fill: var(--teal-dark); stroke: #fff; stroke-width: 2; cursor: pointer; transition: fill .12s; }
 .spark-dot:hover { fill: var(--green-dark); }
 .sv { fill: var(--teal-dark); font-size: 10px; font-weight: 700; text-anchor: middle; }
 
-/* Courbe participants (direct + replay) — bleu, distinct du CSAT (vert) */
-.att-area { fill: url(#attGrad); }
+/* Courbe participants (direct + replay) — bleu, distinct du CSAT (vert).
+   fill posé sur l'élément (id de dégradé unique par webinar). */
 .att-line { fill: none; stroke: #3E86FF; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .att-dot { fill: #1B3A8F; stroke: #fff; stroke-width: 2; cursor: pointer; transition: fill .12s; }
 .att-dot:hover { fill: #3E86FF; }
