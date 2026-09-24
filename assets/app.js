@@ -131,41 +131,196 @@ function render() {
     ? `${sessions.length} / ${all.length} session(s)`
     : `${all.length} session(s)`;
 
-  if (!webinars.length) {
+  const locked = lockedInfo();
+  if (!webinars.length && !locked) {
     app.innerHTML = `<div class="card">Aucun webinar suivi pour le moment.</div>`;
     syncReadonlyTabs();
     return;
   }
   app.innerHTML = "";
-  for (const w of webinars) {
-    app.appendChild(renderWebinar(w, sessions.filter((s) => s.event_id === w.id)));
+  for (const v of buildViews(webinars, data.groups || [])) {
+    if (v.members) {
+      // Groupe : sessions des membres mises en commun. Le webinar passé au rendu
+      // est synthétique (id du groupe) — les membres servent au détail par épisode.
+      const ids = new Set(v.members.map((m) => m.id));
+      app.appendChild(renderWebinar(
+        { id: v.group.id, title: v.group.title, type: v.group.type },
+        sessions.filter((s) => ids.has(s.event_id)), v.members));
+    } else {
+      app.appendChild(renderWebinar(v.webinar, sessions.filter((s) => s.event_id === v.webinar.id)));
+    }
   }
+  // Dernier onglet : le verrou, tant que les webinars protégés ne sont pas
+  // déchiffrés. Il disparaît de lui-même après déverrouillage (plus de blob).
+  if (locked) app.appendChild(renderLock(locked));
   syncReadonlyTabs();
 }
 
+// Liste des vues à rendre, dans l'ordre : un webinar seul, ou un GROUPE qui en
+// réunit plusieurs (cf. `groups` dans webinars.yaml). Un groupe est émis à la
+// position de son PREMIER membre, pour que l'ordre d'affichage reste celui des
+// webinars ; ses autres membres ne produisent pas de vue séparée.
+// Un groupe dont aucun membre n'est présent dans les données est ignoré.
+function buildViews(webinars, groups) {
+  const byId = new Map();          // event_id → groupe qui le réclame
+  for (const g of groups) for (const id of (g.ids || [])) byId.set(id, g);
+  const views = [], done = new Set();
+  for (const w of webinars) {
+    const g = byId.get(w.id);
+    if (!g) { views.push({ webinar: w }); continue; }
+    if (done.has(g.id)) continue;                 // groupe déjà émis
+    done.add(g.id);
+    views.push({ group: g, members: webinars.filter((x) => (g.ids || []).includes(x.id)) });
+  }
+  return views;
+}
+
 // (Re)construit la barre d'onglets de la vue lecture à partir des sections
-// rendues ci-dessus (une <section.webinar> par webinar, dans l'ordre de
-// state.data.webinars). Rejouée à chaque render() (ex. filtre par date) → doit
-// rester idempotente. No-op sur la page admin : admin.js pilote #wtabs là-bas.
+// rendues ci-dessus. Chaque section porte son libellé d'onglet dans
+// data-wtab-label : la barre n'a donc pas à savoir CE qu'elle étiquette (webinar
+// ou verrou). Rejouée à chaque render() → doit rester idempotente. No-op sur la
+// page admin : admin.js pilote #wtabs là-bas.
 function syncReadonlyTabs() {
   if (isAdminPage()) return;
   const nav = document.getElementById("wtabs");
   if (!nav) return;                        // page sans barre d'onglets
   const secs = Array.from(document.querySelectorAll("#app .webinar"));
-  if (secs.length <= 1) {                  // 0 ou 1 webinar → onglets inutiles
+  if (secs.length <= 1) {                  // 0 ou 1 vue → onglets inutiles
     nav.hidden = true;
     secs.forEach((sec) => { sec.hidden = false; });
     return;
   }
   if (roTab >= secs.length) roTab = secs.length - 1;
-  const ws = (state.data && state.data.webinars) || [];
   nav.hidden = false;
   nav.innerHTML = secs.map((sec, i) => {
-    const label = (ws[i] && (ws[i].title || ws[i].id)) || `Webinar ${i + 1}`;
-    return `<button type="button" class="wtab${i === roTab ? " active" : ""}" ` +
-      `data-rotab="${i}" title="${esc(label)}">${esc(label)}</button>`;
+    const label = sec.dataset.wtabLabel || `Webinar ${i + 1}`;
+    const cls = "wtab" + (i === roTab ? " active" : "") +
+      (sec.classList.contains("wlocked") ? " wtab-lock" : "");
+    return `<button type="button" class="${cls}" data-rotab="${i}" ` +
+      `title="${esc(label)}">${esc(label)}</button>`;
   }).join("");
   secs.forEach((sec, i) => { sec.hidden = (i !== roTab); });
+}
+
+// ---- accès protégé (webinars chiffrés) -----------------------------------
+// Les webinars non publics sont publiés CHIFFRÉS (AES-256-GCM) dans
+// data.protected : le fichier est public, son contenu ne l'est pas. Rien ici ne
+// « cache » des données déjà lisibles — sans le bon identifiant + mot de passe,
+// il n'y a que du bruit à l'écran comme dans le fichier. Le déchiffrement a lieu
+// dans le navigateur via Web Crypto ; le secret ne part sur aucun serveur.
+
+// Blob encore verrouillé, ou null (aucun webinar protégé / déjà déverrouillé).
+function lockedInfo() {
+  const p = state.data && state.data.protected;
+  return p && p.ct ? p : null;
+}
+
+// Web Crypto n'existe QUE dans un contexte sécurisé : https:// ou localhost.
+// Un fichier ouvert en file:// ne peut donc pas déchiffrer — autant le dire
+// clairement plutôt que de laisser croire à un mauvais mot de passe.
+const cryptoReady = () => !!(window.crypto && window.crypto.subtle);
+
+const b64bytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+// Déchiffre le blob et fusionne son contenu dans l'état, puis re-rend. L'échec
+// est indiscernable d'un mauvais secret par construction (GCM authentifié) :
+// on ne distingue donc pas « mot de passe faux » de « données abîmées ».
+async function unlockProtected(user, password) {
+  const p = lockedInfo();
+  if (!p) return { ok: false, error: "Aucune donnée protégée à déverrouiller." };
+  if (!cryptoReady()) {
+    return { ok: false, error: "Déchiffrement indisponible ici : ouvre la page en https:// (ou depuis localhost)." };
+  }
+  let payload;
+  try {
+    const km = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(user + "\n" + password), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: b64bytes(p.salt), iterations: p.iter, hash: p.hash || "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    const clear = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: b64bytes(p.iv) }, key, b64bytes(p.ct));
+    payload = JSON.parse(new TextDecoder().decode(clear));
+  } catch (e) {
+    return { ok: false, error: "Identifiant ou mot de passe incorrect." };
+  }
+  // Fusion : les webinars déchiffrés rejoignent les publics, et le blob disparaît
+  // → l'onglet « verrou » n'est plus rendu, les nouveaux onglets apparaissent.
+  const fresh = new Set((payload.webinars || []).map((w) => w.id));
+  state.data.webinars = (state.data.webinars || []).concat(payload.webinars || []);
+  state.data.sessions = (state.data.sessions || []).concat(payload.sessions || []);
+  state.data.groups = mergeGroups(state.data.groups || [], payload.groups || []);
+  delete state.data.protected;
+  // On atterrit sur le premier onglet contenant un webinar fraîchement déverrouillé
+  // (calculé sur les VUES, pas sur les webinars : un groupe en réunit plusieurs).
+  const views = buildViews(state.data.webinars, state.data.groups);
+  const idx = views.findIndex((v) => v.members
+    ? v.members.some((m) => fresh.has(m.id)) : fresh.has(v.webinar.id));
+  roTab = idx >= 0 ? idx : 0;
+  render();
+  return { ok: true };
+}
+
+// Recolle les groupes par id. Un même groupe peut arriver en DEUX morceaux — ses
+// membres publics dans le fichier en clair, ses membres protégés dans le blob —
+// et doit redevenir UN seul onglet : sans cette fusion, buildViews n'émettrait le
+// groupe qu'une fois et les membres de l'autre morceau ne seraient rendus nulle part.
+function mergeGroups(a, b) {
+  const byId = new Map();
+  for (const g of a.concat(b)) {
+    const prev = byId.get(g.id);
+    if (!prev) { byId.set(g.id, { ...g, ids: (g.ids || []).slice() }); continue; }
+    for (const id of (g.ids || [])) if (!prev.ids.includes(id)) prev.ids.push(id);
+  }
+  return Array.from(byId.values());
+}
+
+// Section « verrou » : un onglet comme un autre, avec le formulaire d'accès.
+function renderLock(p) {
+  const sec = document.createElement("section");
+  sec.className = "webinar wlocked";
+  sec.dataset.wtabLabel = "🔒 Accès privé";
+  const n = Number(p.count) || 0;
+  sec.innerHTML = `
+    <div class="wh"><h2>Accès privé</h2></div>
+    <div class="lockbox">
+      <p class="lock-intro">
+        ${n ? `<strong>${intf(n)}</strong> webinar(s) suppl&eacute;mentaire(s) sont` : "Des webinars suppl&eacute;mentaires sont"}
+        disponibles sur cette page, <strong>chiffr&eacute;s</strong>.
+        Saisis l'identifiant et le mot de passe fournis pour les consulter.
+      </p>
+      <form class="lock-form" autocomplete="off">
+        <label class="lock-field">Identifiant
+          <input type="text" name="user" autocomplete="username" required>
+        </label>
+        <label class="lock-field">Mot de passe
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="lock-btn">Déverrouiller</button>
+      </form>
+      <p class="lock-msg" role="alert" aria-live="polite"></p>
+      <p class="lock-note muted">
+        Le déchiffrement se fait dans ton navigateur : le mot de passe n'est envoyé
+        à aucun serveur. Les données restent des agrégats, sans donnée personnelle.
+      </p>
+    </div>`;
+  const form = sec.querySelector(".lock-form");
+  const msg = sec.querySelector(".lock-msg");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector(".lock-btn");
+    msg.className = "lock-msg";
+    msg.textContent = "Déverrouillage…";
+    btn.disabled = true;
+    const res = await unlockProtected(form.user.value.trim(), form.password.value);
+    if (!res.ok) {                   // en cas de succès, render() a déjà tout remplacé
+      btn.disabled = false;
+      msg.className = "lock-msg lock-err";
+      msg.textContent = res.error;
+      form.password.select();
+    }
+  });
+  return sec;
 }
 
 // Bascule d'onglet (vue lecture) : masque/affiche sans re-rendre tout #app.
@@ -227,7 +382,11 @@ async function reload() {
 window.DASH = { render, reload, state, filterByDate };
 
 // ---- render --------------------------------------------------------------
-function renderWebinar(w, sessions) {
+// Rend le rapport d'UN webinar, ou d'un GROUPE si `members` est fourni (les
+// sessions reçues sont alors celles de tous les membres, déjà mises en commun) :
+// KPIs et graphes sont cumulés, et un tableau « Détail par épisode » redonne les
+// chiffres de chaque membre.
+function renderWebinar(w, sessions, members) {
   const past = sessions.filter((s) => s.status === "past")
     .sort((a, b) => ts(a.estimated_started_at) - ts(b.estimated_started_at));
   const upcoming = sessions.filter((s) => s.status === "upcoming")
@@ -244,10 +403,19 @@ function renderWebinar(w, sessions) {
 
   const sec = document.createElement("section");
   sec.className = "webinar";
+  sec.dataset.wtabLabel = w.title || w.id || "Webinar";   // libellé de son onglet
+  // Webinars réellement couverts par cette section : son propre id, ou ceux des
+  // membres pour un groupe. C'est ce que la console admin lit pour savoir sur QUI
+  // porte la case « publier » — jamais l'indice de la section, qui ne correspond
+  // plus au rang du webinar dès qu'un groupe en réunit plusieurs.
+  sec.dataset.wids = (members && members.length
+    ? members.map((m) => m.id) : [w.id]).filter(Boolean).join(",");
   sec.innerHTML = `
     <div class="wh">
       <h2>${esc(w.title || w.id)}</h2>
       ${w.type ? `<span class="tag">${esc(w.type)}</span>` : ""}
+      ${members && members.length > 1
+        ? `<span class="tag tag-grp">${intf(members.length)} webinars</span>` : ""}
     </div>
     <div class="kpis">
       ${kpi("Taux de présence moyen", pct(avg), "passé")}
@@ -265,11 +433,54 @@ function renderWebinar(w, sessions) {
     <h3>Participants par session (direct + replay)</h3>
     ${attendeesChart(past, w.id)}
     ${csat ? `<h3>Évolution de la satisfaction (CSAT)</h3>${csatChart(past, w.id)}` : ""}
+    ${members && members.length > 1
+      ? `<h3>Détail par épisode</h3>${episodeTable(members, sessions)}` : ""}
     ${upcoming.length ? `<h3>Sessions à venir</h3>${upcomingList(upcoming)}` : ""}
     <h3>Détail des sessions passées</h3>
     ${table(past.slice().reverse())}
   `;
   return sec;
+}
+
+// Tableau récapitulatif d'un groupe : une ligne par webinar membre, avec SES
+// propres chiffres — les KPIs et graphes au-dessus étant cumulés, c'est ici qu'on
+// compare les épisodes entre eux. Ordre = celui de la config (donc #1, #2, …).
+function episodeTable(members, sessions) {
+  const rows = members.map((m) => {
+    const mine = sessions.filter((s) => s.event_id === m.id);
+    const past = mine.filter((s) => s.status === "past");
+    const reg = past.reduce((n, s) => n + (s.registrants || 0), 0);
+    const tot = past.reduce((n, s) => n + attTotal(s), 0);
+    return {
+      title: m.title || m.id,
+      past: past.length,
+      up: mine.filter((s) => s.status === "upcoming").length,
+      reg, tot,
+      rate: reg ? tot / reg : null,
+      q: past.reduce((n, s) => n + (s.questions || 0), 0),
+      csat: csatAvg(past),
+    };
+  });
+  const body = rows.map((r) => `<tr>
+      <td>${esc(r.title)}</td>
+      <td class="num">${intf(r.past)}${r.up ? ` <span class="muted">+${intf(r.up)}</span>` : ""}</td>
+      <td class="num">${intf(r.reg)}</td>
+      <td class="num">${intf(r.tot)}</td>
+      <td class="num">${pct(r.rate)}</td>
+      <td class="num">${intf(r.q)}</td>
+      <td class="num">${r.csat ? `${r.csat.score}/${r.csat.scale}` : "—"}</td>
+    </tr>`).join("");
+  return `<div class="tablewrap"><table class="eptable">
+    <thead><tr>
+      <th>Épisode</th>
+      <th class="num" title="Sessions passées (+ à venir)">Sessions</th>
+      <th class="num">Inscrits</th>
+      <th class="num" title="Direct + replay (audience unique)">Participants</th>
+      <th class="num">Taux</th>
+      <th class="num">Questions</th>
+      <th class="num">CSAT</th>
+    </tr></thead>
+    <tbody>${body}</tbody></table></div>`;
 }
 
 function kpi(label, value, note) {

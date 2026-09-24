@@ -130,6 +130,37 @@ body {
   .wtabs-grid { grid-template-columns: 1fr; }   /* mobile : onglets empilés */
 }
 
+/* Onglet verrouillé (accès privé) : dashed = « il y a autre chose derrière ». */
+.wtab-lock { border-style: dashed; }
+.wtab-lock.active { border-style: solid; }
+
+/* ── Accès privé (webinars chiffrés) ─────────────────────────────────────── */
+.lockbox {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px; box-shadow: var(--shadow); max-width: 560px;
+}
+.lock-intro { margin: 0 0 18px; }
+.lock-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.lock-field {
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 13px; font-weight: 600; color: var(--teal-dark);
+}
+.lock-field input {
+  font: inherit; font-weight: 400; color: var(--ink); background: #fff;
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 190px;
+}
+.lock-field input:focus { outline: 2px solid var(--green-light); outline-offset: 0; }
+.lock-btn {
+  font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; color: #fff;
+  background: var(--teal-dark); border: 1px solid var(--teal-dark);
+  border-radius: 999px; padding: 9px 20px;
+}
+.lock-btn:hover { background: var(--teal); }
+.lock-btn:disabled { opacity: .55; cursor: default; }
+.lock-msg { min-height: 1.2em; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.lock-err { color: #b23b3b; font-weight: 600; }
+.lock-note { margin: 16px 0 0; font-size: 12.5px; }
+
 .webinar { margin-bottom: 52px; }
 .wh { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .wh h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.4px; color: var(--teal-dark); }
@@ -137,6 +168,8 @@ body {
   font-size: 12px; font-weight: 700; color: var(--teal-dark);
   background: var(--bg-light); padding: 4px 11px; border-radius: 999px;
 }
+/* Onglet regroupant plusieurs webinars : signale que les chiffres sont cumulés. */
+.tag-grp { background: var(--blue-soft); color: #1c3d66; }
 
 /* ── KPIs ────────────────────────────────────────────────────────────── */
 .kpis {
@@ -218,6 +251,11 @@ tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .rowcta { color: var(--green-dark); font-weight: 700; opacity: 0; transition: opacity .12s; }
 tbody tr:hover .rowcta { opacity: 1; }
+
+/* Tableau « détail par épisode » d'un groupe : ses lignes n'ouvrent PAS de
+   modale (contrairement au tableau des sessions), donc pas de curseur main. */
+.eptable tbody tr { cursor: default; }
+.eptable td:first-child { font-weight: 600; }
 
 /* ── Cartes / erreurs ────────────────────────────────────────────────── */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
