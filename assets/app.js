@@ -156,6 +156,29 @@ function render() {
   syncReadonlyTabs();
 }
 
+// Bandeau « aperçu local ». Les deux pages partagent app.js et le même style :
+// rien ne distingue à l'œil l'aperçu local (TOUS les webinars suivis, en clair,
+// sans verrou) de la page publique (RFE seul + accès protégé). On le dit donc
+// explicitement, sinon on croit voir une fuite sur la page publique alors qu'on
+// regarde sa propre machine. Le repère est `published`, posé par publish_site.py
+// sur la build publique — pas l'URL : servir le clone public en local reste bien
+// la build publique, et ne doit pas afficher ce bandeau.
+// Pas de bandeau sur la console admin : son entête l'identifie déjà.
+function showLocalBanner() {
+  if (isAdminPage()) return;
+  const host = document.getElementById("controls");
+  if (!host || document.querySelector(".localbanner")) return;
+  if (state.data && state.data.published) return;
+  const el = document.createElement("div");
+  el.className = "wrap localbanner-wrap";
+  el.innerHTML =
+    `<div class="localbanner">⚠️ <strong>Aperçu local</strong> — tous les webinars ` +
+    `suivis sont affichés <strong>en clair, sans verrou</strong>. Ce n'est pas la ` +
+    `page publique : elle ne montre que les webinars publiés, les autres étant ` +
+    `chiffrés derrière l'accès privé.</div>`;
+  host.parentNode.insertBefore(el, host);
+}
+
 // Liste des vues à rendre, dans l'ordre : un webinar seul, ou un GROUPE qui en
 // réunit plusieurs (cf. `groups` dans webinars.yaml). Un groupe est émis à la
 // position de son PREMIER membre, pour que l'ordre d'affichage reste celui des
@@ -349,6 +372,7 @@ async function main() {
   const upd = document.getElementById("updated");
   if (state.data.generated_at) upd.textContent = "Mis à jour le " + fmtDateTime(state.data.generated_at);
 
+  showLocalBanner();
   buildControls();
   render();
 

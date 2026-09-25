@@ -64,6 +64,14 @@ body {
 .wrap { max-width: 1040px; margin: 0 auto; padding: clamp(18px, 4vw, 44px); }
 .muted { color: var(--muted); }
 
+/* ── Bandeau « aperçu local » (jamais sur la page publique) ──────────────── */
+.localbanner-wrap { padding-top: 18px; padding-bottom: 0; }
+.localbanner {
+  background: #fff6e0; border: 1px solid #f0d492; border-left: 4px solid #d99a1c;
+  border-radius: var(--radius); padding: 12px 16px; font-size: 13.5px; color: #6b4a08;
+}
+.localbanner strong { color: #5a3d06; }
+
 /* ── Filtre par date ─────────────────────────────────────────────────────── */
 .controls-wrap { padding-top: 0; padding-bottom: 0; }
 .filterbar {
