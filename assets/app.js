@@ -587,9 +587,11 @@ function attendeesChart(past, uid) {
     const v = val(s), x = cx(i), y = cy(v);
     const d = fmtDate(s.estimated_started_at);
     // Si le replay a été compté (replay non null) : les deux chiffres + le total ;
-    // sinon on n'a que le direct.
+    // sinon on n'a que le direct. `replay` = ceux qui ont RATTRAPÉ en replay sans
+    // avoir vu le direct (cf. _replay_and_total) — donc direct + rattrapage = total,
+    // sans recoupement. Ne pas écrire « ont vu le replay » : ce serait plus large.
     const tip = s.replay != null
-      ? `${esc(d)} — ${intf(v)} au total (audience unique) · ${intf(s.attendees)} en direct · ${intf(s.replay)} ont vu le replay`
+      ? `${esc(d)} — ${intf(v)} au total (audience unique) · ${intf(s.attendees)} en direct · ${intf(s.replay)} ont rattrapé en replay`
       : `${esc(d)} — ${intf(v)} présent(s) en direct`;
     dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" class="att-dot" data-sid="${esc(s.session_id)}">` +
       `<title>${tip} · cliquer pour le détail</title></circle>`;
@@ -744,9 +746,11 @@ function openDetail(s) {
   const attLabel = s.status === "upcoming" ? "Inscrits à ce jour" : "Inscrits";
   // Détail replay : uniquement si le comptage a eu lieu (replay non null, càd
   // session terminée d'un webinar publié). Sinon on n'affiche que le direct.
+  // `replay` ne compte que ceux qui ont rattrapé SANS voir le direct : les deux
+  // tuiles s'additionnent donc exactement en l'audience totale, sans doublon.
   const hasReplay = s.replay != null;
   const replayTiles = hasReplay
-    ? stat(intf(s.replay), "Ont vu le replay") +
+    ? stat(intf(s.replay), "Ont rattrapé en replay") +
       stat(intf(s.attendees_total), "Audience totale (direct + replay)")
     : "";
 
